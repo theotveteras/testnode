@@ -1,0 +1,183 @@
+<!DOCTYPE HTML>
+<html lang="en-US">
+<head>
+	<meta charset="UTF-8">
+	<title>HALLO</title>
+	<style type="text/css">
+
+
+#left{
+position: fixed;
+left: 0px;
+width: 50%;
+padding-top: 30px;
+}
+
+#right{
+  top:0px;
+  height: 1000px;
+  width: 50%;
+  border-left: 1px solid #eee;
+  position: absolute;
+  right: 0px;
+  overflow: scroll;
+padding-top: 38px;
+  background-color: #ddd;
+}
+#knapper{
+  margin-left: auto;
+  margin-right: auto;
+  width: 600px;
+}
+#download, #delete{
+border-radius: 4px;
+background-color: #eee;
+margin-top: 30px;
+text-align: left;
+text-decoration: none;
+cursor: pointer;
+display: block; 
+font-family: Arial, Helvetica, sans-serif;
+font-weight: 800;
+}
+
+#delete{
+  color: #999;
+  float: left;
+}
+
+#download{
+  color: #4778C2;
+  float: right;
+}
+
+.clear{
+clear: both;
+}
+
+#download:hover, #delete:hover{
+color: #888;
+}
+
+img{
+    display: block;
+  margin-bottom: 30px;
+    margin-right: auto;
+  margin-left: auto;
+  -webkit-box-shadow: 0px 20px 45px 0px rgba(0, 0, 0, 0.12);
+-moz-box-shadow:    0px 20px 45px 0px rgba(0, 0, 0, 0.12);
+box-shadow:         0px 20px 45px 0px rgba(0, 0, 0, 0.12);
+}
+
+canvas{
+  display: block;
+  margin-right: auto;
+  margin-left: auto;
+-webkit-box-shadow: 0px 20px 45px 0px rgba(0, 0, 0, 0.12);
+-moz-box-shadow:    0px 20px 45px 0px rgba(0, 0, 0, 0.12);
+box-shadow:         0px 20px 45px 0px rgba(0, 0, 0, 0.12);
+cursor: pointer;
+}</style>
+
+	<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+
+<body style="background-color:#efefef;">
+	<div id="left">
+		<canvas  style="background-color:#333;"id="pxls" width="600" height="600">
+		    Your browser does not support HTML5 Canvas element, dude.
+    </canvas>
+
+    <div id="knapper">
+     <a href="#" id="delete">CLEAR CANVAS</a>
+     <a id="download">SUBMIT DRAWING!</a>
+     <div class="clear"></div>
+    </div>
+	</div>
+<div id="right">
+<div id="log"></div>
+</div>
+
+<script type="text/javascript">
+  var socket = io();
+
+var canvas = document.getElementById("pxls");
+var c = canvas.getContext("2d");
+    c.fillStyle="#FFFFFF";
+    c.fillRect(0,0,600,600);
+var paint=false;
+var pixelcolor=0;
+
+$(canvas).mousedown(function(e){
+paint=true;
+console.log('hurra');
+    var canvasOffset = $(canvas).offset();
+    var canvasX = Math.floor(e.pageX-canvasOffset.left);
+    var canvasY = Math.floor(e.pageY-canvasOffset.top);
+    var imageData = c.getImageData(0, 0, canvas.width, canvas.height);
+    var pixels = imageData.data;
+    var pixelRedIndex = ((canvasY - 1) * (imageData.width * 4)) + ((canvasX - 1) * 4);
+    pixelcolor = "rgba("+pixels[pixelRedIndex]+", "+pixels[pixelRedIndex+1]+", "+pixels[pixelRedIndex+2]+", "+pixels[pixelRedIndex+3]+")";
+  	console.log(pixelcolor);
+  	
+if (paint==true && pixelcolor=='rgba(255, 255, 255, 255)' || paint==true && pixelcolor=='rgba(0, 0, 0, 0)'){ //Om hvit
+  	//console.log('baba');
+	c.fillStyle = "black";  
+    c.fillRect(Math.floor(e.offsetX/40)*40, Math.floor(e.offsetY/40)*40, 40, 40); }
+    
+if (paint==true && pixelcolor=='rgba(0, 0, 0, 255)'){ //Om svart
+  	//console.log('boba');
+	c.fillStyle = "white";  
+    c.fillRect(Math.floor(e.offsetX/40)*40, Math.floor(e.offsetY/40)*40, 40, 40); }
+});
+
+$(canvas).mouseup(function(){
+paint=false;
+console.log('buu');
+
+});
+
+ 
+$(canvas).mousemove(function(e) {
+
+if (paint==true && pixelcolor=='rgba(255, 255, 255, 255)' || paint==true && pixelcolor=='rgba(0, 0, 0, 0)'){ //Om hvit
+  	//console.log('baba');
+	c.fillStyle = "black";  
+    c.fillRect(Math.floor(e.offsetX/40)*40, Math.floor(e.offsetY/40)*40, 40, 40); }
+    
+if (paint==true && pixelcolor=='rgba(0, 0, 0, 255)'){ //Om svart
+  	//console.log('boba');
+	c.fillStyle = "white";  
+    c.fillRect(Math.floor(e.offsetX/40)*40, Math.floor(e.offsetY/40)*40, 40, 40); }
+    });
+    
+ function downloadCanvas(link, canvasId, filename) {
+    link.href = document.getElementById("pxls").toDataURL();
+    link.download = filename;
+}
+
+document.getElementById('download').addEventListener('click', function() {
+var canvas = document.getElementById("pxls");
+var img    = canvas.toDataURL("image/png");
+
+        socket.emit('color', img);
+    c.fillStyle="#FFFFFF";
+    c.fillRect(0,0,600,600);
+}, false);
+
+  socket.on('color', function(msg){
+//$("#log").prepend('<img src="'+msg+'"/>');
+$('<img src="'+msg+'"/>').prependTo('#log').hide().slideDown("fast");
+  });
+
+
+$('#delete').click(function(){
+    c.fillStyle="#FFFFFF";
+    c.fillRect(0,0,600,600);
+    });
+
+</script>
+
+</body>
+</html>
